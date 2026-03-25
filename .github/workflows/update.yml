@@ -20,7 +20,7 @@ jobs:
           chmod +x merge.sh
           ./merge.sh
 
-      - name: Commit
+      - name: Commit result
         run: |
           git config user.name "bot"
           git config user.email "bot@example.com"
