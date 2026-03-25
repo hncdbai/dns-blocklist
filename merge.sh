@@ -35,8 +35,19 @@ download_list () {
 
 # ===== 清洗域名 =====
 clean_domains () {
-  grep -Eo '([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}' \
+  # 1. 去掉明显不适合DNS的规则
+  grep -vE '/|\?|\$|@' \
+
+  # 2. 提取域名
+  | grep -Eo '([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}' \
+
+  # 3. 转小写
   | tr '[:upper:]' '[:lower:]' \
+
+  # 4. 过滤异常域名（可选优化）
+  | grep -vE '^([a-z0-9-]{1,3})\.(com|net|org)$' \
+
+  # 5. 去重
   | sort -u
 }
 
