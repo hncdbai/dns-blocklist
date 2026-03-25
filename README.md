@@ -43,6 +43,7 @@
 
 ### `blocklist-full.txt`
 https://ghfast.top/https://raw.githubusercontent.com/hncdbai/dns-blocklist/main/blocklist-full.txt
+
 **最完整版本**
 
 包含：
@@ -63,6 +64,7 @@ https://ghfast.top/https://raw.githubusercontent.com/hncdbai/dns-blocklist/main/
 
 ### `blocklist-cn.txt` ⭐ 推荐
 https://ghfast.top/https://raw.githubusercontent.com/hncdbai/dns-blocklist/main/blocklist-cn.txt
+
 **国内优化版本**
 
 包含：
@@ -83,6 +85,7 @@ https://ghfast.top/https://raw.githubusercontent.com/hncdbai/dns-blocklist/main/
 
 ### `blocklist-global.txt`
 https://ghfast.top/https://raw.githubusercontent.com/hncdbai/dns-blocklist/main/blocklist-global.txt
+
 **国际稳定版本**
 
 包含：
@@ -160,6 +163,7 @@ https://raw.githubusercontent.com/<你的用户名>/<仓库名>/main/blocklist-c
 
 👉 `blocklist-cn.txt`
 https://ghfast.top/https://raw.githubusercontent.com/hncdbai/dns-blocklist/main/blocklist-cn.txt
+
 ---
 
 ## ⚠️ 注意事项
