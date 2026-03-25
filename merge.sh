@@ -2,6 +2,9 @@
 
 set -e
 
+REMOTE_WHITELIST_URL="https://raw.githubusercontent.com/BlueSkyXN/AdGuardHomeRules/master/ok.txt"
+REMOTE_WHITELIST="whitelist-remote.txt"
+
 TMP_ALL="tmp_all.txt"
 TMP_CLEAN="tmp_clean.txt"
 
@@ -12,6 +15,9 @@ GLOBAL="blocklist-global.txt"
 > $TMP_ALL
 
 echo "Downloading sources..."
+
+echo "Downloading remote whitelist..."
+curl -s $REMOTE_WHITELIST_URL > $REMOTE_WHITELIST
 
 while read url; do
   [[ "$url" =~ ^#.*$ || -z "$url" ]] && continue
@@ -36,7 +42,16 @@ cat $TMP_ALL \
 echo "Applying whitelist..."
 
 # 去掉白名单
-grep -v -f whitelist.txt $TMP_CLEAN > $FULL || cp $TMP_CLEAN $FULL
+cat whitelist.txt whitelist-auto.txt $REMOTE_WHITELIST > whitelist-all.txt
+
+# 清理格式（很重要）
+sed -i 's/\r//' whitelist-all.txt
+
+# 去掉注释和空行
+grep -v '^#' whitelist-all.txt | grep -v '^$' > whitelist-final.txt
+
+# 应用白名单
+grep -v -f whitelist-final.txt $TMP_CLEAN > $FULL || cp $TMP_CLEAN $FULL
 
 echo "Generating CN list..."
 
