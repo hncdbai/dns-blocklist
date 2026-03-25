@@ -36,7 +36,7 @@ cat $TMP_ALL \
 echo "Applying whitelist..."
 
 # 去掉白名单
-grep -v -f whitelist.txt $TMP_CLEAN > $FULL
+grep -v -f whitelist.txt $TMP_CLEAN > $FULL || cp $TMP_CLEAN $FULL
 
 echo "Generating CN list..."
 
