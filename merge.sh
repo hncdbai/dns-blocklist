@@ -29,13 +29,14 @@ download_list () {
 
 # ===== 清洗规则（保留ABP格式）=====
 clean_rules () {
-  grep -vE '^!|^\[|^#' \          # 去注释
-  | sed 's/\r//' \
-  | grep -E '^\|\||^@@\|\|' \     # 只保留 || 和 @@||
-  | grep -vE '/|\$|#' \           # 去路径规则/参数规则
-  | sort -u
+  (
+    grep -vE '^!|^\[|^#' |
+    sed 's/\r//' |
+    grep -E '^\|\||^@@\|\|' |
+    grep -vE '/|\$|#' |
+    sort -u
+  )
 }
-
 echo "Downloading rules..."
 
 download_list sources-main.txt main.txt
