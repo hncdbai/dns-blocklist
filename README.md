@@ -42,7 +42,7 @@
 ## 📁 输出文件说明
 
 ### `blocklist-full.txt`
-https://ghfast.top/https://raw.githubusercontent.com/hncdbai/dns-blocklist/main/blocklist-full.txt
+https://raw.githubusercontent.com/hncdbai/dns-blocklist/main/blocklist-full.txt
 
 **最完整版本**
 
@@ -63,7 +63,7 @@ https://ghfast.top/https://raw.githubusercontent.com/hncdbai/dns-blocklist/main/
 ---
 
 ### `blocklist-cn.txt` ⭐ 推荐
-https://ghfast.top/https://raw.githubusercontent.com/hncdbai/dns-blocklist/main/blocklist-cn.txt
+https://raw.githubusercontent.com/hncdbai/dns-blocklist/main/blocklist-cn.txt
 
 **国内优化版本**
 
@@ -84,7 +84,7 @@ https://ghfast.top/https://raw.githubusercontent.com/hncdbai/dns-blocklist/main/
 ---
 
 ### `blocklist-global.txt`
-https://ghfast.top/https://raw.githubusercontent.com/hncdbai/dns-blocklist/main/blocklist-global.txt
+https://raw.githubusercontent.com/hncdbai/dns-blocklist/main/blocklist-global.txt
 
 **国际稳定版本**
 
@@ -156,13 +156,13 @@ https://raw.githubusercontent.com/BlueSkyXN/AdGuardHomeRules/master/ok.txt
 将以下地址填入你的 DNS 工具（如 AdGuard Home / Pi-hole）：
 
 ```
-https://raw.githubusercontent.com/<你的用户名>/<仓库名>/main/blocklist-cn.txt
+https://raw.githubusercontent.com/hncdbai/dns-blocklist/main/blocklist-cn.txt
 ```
 
 推荐使用：
 
 👉 `blocklist-cn.txt`
-https://ghfast.top/https://raw.githubusercontent.com/hncdbai/dns-blocklist/main/blocklist-cn.txt
+https://raw.githubusercontent.com/hncdbai/dns-blocklist/main/blocklist-cn.txt
 
 ---
 
