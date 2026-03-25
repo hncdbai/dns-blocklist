@@ -1,0 +1,20 @@
+# ===== 局域网 =====
+.local
+.lan
+
+# ===== 投屏 =====
+_airplay._tcp
+_googlecast._tcp
+
+# ===== Apple =====
+apple.com
+icloud.com
+
+# ===== Google =====
+googleapis.com
+gstatic.com
+
+# ===== 国内CDN =====
+alicdn.com
+tencent-cloud.net
+bdydns.com
