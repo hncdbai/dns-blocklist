@@ -1,69 +1,96 @@
 #!/bin/bash
-
 set -e
 
+# ===== 远程白名单 =====
 REMOTE_WHITELIST_URL="https://raw.githubusercontent.com/BlueSkyXN/AdGuardHomeRules/master/ok.txt"
 REMOTE_WHITELIST="whitelist-remote.txt"
 
-TMP_ALL="tmp_all.txt"
-TMP_CLEAN="tmp_clean.txt"
+# ===== 临时文件 =====
+TMP_MAIN="tmp_main.txt"
+TMP_CN="tmp_cn.txt"
+TMP_EXTRA="tmp_extra.txt"
 
-FULL="blocklist-full.txt"
-CN="blocklist-cn.txt"
-GLOBAL="blocklist-global.txt"
+# ===== 输出 =====
+OUT_FULL="blocklist-full.txt"
+OUT_CN="blocklist-cn.txt"
+OUT_GLOBAL="blocklist-global.txt"
 
-> $TMP_ALL
+# ===== 下载函数 =====
+download_list () {
+  local file=$1
+  local output=$2
+  > $output
 
-echo "Downloading sources..."
+  while read url; do
+    [[ "$url" =~ ^#.*$ || -z "$url" ]] && continue
+    echo "Fetching: $url"
+    curl -s "$url" >> $output
+    echo "" >> $output
+  done < $file
+}
 
-echo "Downloading remote whitelist..."
-curl -s $REMOTE_WHITELIST_URL > $REMOTE_WHITELIST
+# ===== 清洗域名 =====
+clean_domains () {
+  grep -Eo '([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}' \
+  | tr '[:upper:]' '[:lower:]' \
+  | sort -u
+}
 
-while read url; do
-  [[ "$url" =~ ^#.*$ || -z "$url" ]] && continue
-  echo "Fetching: $url"
-  curl -s "$url" >> $TMP_ALL
-  echo "" >> $TMP_ALL
-done < sources.txt
+echo "Downloading MAIN..."
+download_list sources-main.txt $TMP_MAIN
 
-echo "Cleaning..."
+echo "Downloading CN..."
+download_list sources-cn.txt $TMP_CN
 
-# 提取域名（适配 DNS）
-cat $TMP_ALL \
-| sed 's/\r//g' \
-| grep -v '^!' \
-| grep -v '^#' \
-| grep -v '^$' \
-| grep -Eo '([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}' \
-| tr '[:upper:]' '[:lower:]' \
-| sort -u \
-> $TMP_CLEAN
+echo "Downloading EXTRA..."
+download_list sources-extra.txt $TMP_EXTRA
 
-echo "Applying whitelist..."
+# ===== 下载远程白名单 =====
+echo "Downloading REMOTE whitelist..."
+curl -s $REMOTE_WHITELIST_URL > $REMOTE_WHITELIST || echo "Failed to download remote whitelist"
 
-# 去掉白名单
+echo "Cleaning rules..."
+
+cat $TMP_MAIN | clean_domains > main.txt
+cat $TMP_CN | clean_domains > cn.txt
+cat $TMP_EXTRA | clean_domains > extra.txt
+
+# ===== 处理白名单 =====
+echo "Preparing whitelist..."
+
+touch whitelist.txt whitelist-auto.txt $REMOTE_WHITELIST
+
 cat whitelist.txt whitelist-auto.txt $REMOTE_WHITELIST > whitelist-all.txt
 
-# 清理格式（很重要）
+# 清理格式
 sed -i 's/\r//' whitelist-all.txt
 
 # 去掉注释和空行
 grep -v '^#' whitelist-all.txt | grep -v '^$' > whitelist-final.txt
 
-# 应用白名单
-grep -v -f whitelist-final.txt $TMP_CLEAN > $FULL || cp $TMP_CLEAN $FULL
+# ===== FULL（全部规则）=====
+echo "Generating FULL..."
+cat main.txt cn.txt extra.txt \
+| sort -u \
+| grep -v -f whitelist-final.txt \
+> $OUT_FULL || cp main.txt $OUT_FULL
 
-echo "Generating CN list..."
+# ===== CN（国内优先）=====
+echo "Generating CN..."
+cat main.txt cn.txt \
+| sort -u \
+| grep -v -f whitelist-final.txt \
+> $OUT_CN || cp main.txt $OUT_CN
 
-# CN版本（全部）
-cp $FULL $CN
+# ===== GLOBAL（去国内）=====
+echo "Generating GLOBAL..."
+cat main.txt extra.txt \
+| grep -v -E '\.cn$|qq\.com|baidu|taobao|jd\.com' \
+| sort -u \
+| grep -v -f whitelist-final.txt \
+> $OUT_GLOBAL || cp main.txt $OUT_GLOBAL
 
-echo "Generating GLOBAL list..."
-
-# GLOBAL：去掉明显国内域名
-grep -v -E '\.cn$|baidu|qq\.com|taobao|jd\.com|bilibili' $FULL > $GLOBAL
-
-# 清理
-rm $TMP_ALL $TMP_CLEAN
+# ===== 清理 =====
+rm -f tmp_*.txt main.txt cn.txt extra.txt whitelist-all.txt
 
 echo "Done!"
