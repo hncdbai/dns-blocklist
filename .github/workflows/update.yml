@@ -1,6 +1,6 @@
 name: Update Blocklist
 
-on:
+于:
   schedule:
     - cron: "0 3 * * *"
   workflow_dispatch:
@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write   # ⭐关键这一行
 
     steps:
       - uses: actions/checkout@v3
