@@ -2,7 +2,7 @@ name: Update Blocklist
 
 on:
   schedule:
-    - cron: "0 3 * * *"   # 每天自动更新
+    - cron: "0 3 * * *"
   workflow_dispatch:
 
 jobs:
@@ -12,15 +12,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Run merge script
+      - name: Run script
         run: |
           chmod +x merge.sh
           ./merge.sh
 
-      - name: Commit result
+      - name: Commit
         run: |
           git config user.name "bot"
           git config user.email "bot@example.com"
-          git add blocklist.txt
+          git add .
           git commit -m "update blocklist" || echo "no changes"
           git push
