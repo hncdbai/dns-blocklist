@@ -1,25 +1,54 @@
 #!/bin/bash
 
-OUTPUT="blocklist.txt"
-TEMP="temp.txt"
+set -e
 
-> $TEMP
+TMP_ALL="tmp_all.txt"
+TMP_CLEAN="tmp_clean.txt"
 
-# 下载所有规则
+FULL="blocklist-full.txt"
+CN="blocklist-cn.txt"
+GLOBAL="blocklist-global.txt"
+
+> $TMP_ALL
+
+echo "Downloading sources..."
+
 while read url; do
-  curl -s "$url" >> $TEMP
-  echo "" >> $TEMP
+  [[ "$url" =~ ^#.*$ || -z "$url" ]] && continue
+  echo "Fetching: $url"
+  curl -s "$url" >> $TMP_ALL
+  echo "" >> $TMP_ALL
 done < sources.txt
 
-# 清理 + 去重
-cat $TEMP \
+echo "Cleaning..."
+
+# 提取域名（适配 DNS）
+cat $TMP_ALL \
 | sed 's/\r//g' \
 | grep -v '^!' \
 | grep -v '^#' \
 | grep -v '^$' \
+| grep -Eo '([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}' \
+| tr '[:upper:]' '[:lower:]' \
 | sort -u \
-> $OUTPUT
+> $TMP_CLEAN
 
-rm $TEMP
+echo "Applying whitelist..."
 
-echo "Done. Output: $OUTPUT"
+# 去掉白名单
+grep -v -f whitelist.txt $TMP_CLEAN > $FULL
+
+echo "Generating CN list..."
+
+# CN版本（全部）
+cp $FULL $CN
+
+echo "Generating GLOBAL list..."
+
+# GLOBAL：去掉明显国内域名
+grep -v -E '\.cn$|baidu|qq\.com|taobao|jd\.com|bilibili' $FULL > $GLOBAL
+
+# 清理
+rm $TMP_ALL $TMP_CLEAN
+
+echo "Done!"
