@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# ===== 时间 =====
+NOW=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+
 # ===== 远程白名单 =====
 REMOTE_WHITELIST_URL="https://raw.githubusercontent.com/BlueSkyXN/AdGuardHomeRules/master/ok.txt"
 REMOTE_WHITELIST="whitelist-remote.txt"
@@ -9,6 +12,7 @@ REMOTE_WHITELIST="whitelist-remote.txt"
 TMP_MAIN="tmp_main.txt"
 TMP_CN="tmp_cn.txt"
 TMP_EXTRA="tmp_extra.txt"
+TMP_OUT="tmp_out.txt"
 
 # ===== 输出 =====
 OUT_FULL="blocklist-full.txt"
@@ -68,29 +72,74 @@ sed -i 's/\r//' whitelist-all.txt
 # 去掉注释和空行
 grep -v '^#' whitelist-all.txt | grep -v '^$' > whitelist-final.txt
 
-# ===== FULL（全部规则）=====
+# =========================
+# FULL
+# =========================
 echo "Generating FULL..."
+
 cat main.txt cn.txt extra.txt \
 | sort -u \
 | grep -v -f whitelist-final.txt \
-> $OUT_FULL || cp main.txt $OUT_FULL
+> $TMP_OUT || cp main.txt $TMP_OUT
 
-# ===== CN（国内优先）=====
+COUNT=$(wc -l < $TMP_OUT)
+
+{
+echo "# ========================================="
+echo "# DNS Blocklist (FULL Version)"
+echo "# Generated: $NOW"
+echo "# Total Domains: $COUNT"
+echo "# ========================================="
+echo ""
+cat $TMP_OUT
+} > $OUT_FULL
+
+# =========================
+# CN
+# =========================
 echo "Generating CN..."
+
 cat main.txt cn.txt \
 | sort -u \
 | grep -v -f whitelist-final.txt \
-> $OUT_CN || cp main.txt $OUT_CN
+> $TMP_OUT || cp main.txt $TMP_OUT
 
-# ===== GLOBAL（去国内）=====
+COUNT=$(wc -l < $TMP_OUT)
+
+{
+echo "# ========================================="
+echo "# DNS Blocklist (CN Version)"
+echo "# Generated: $NOW"
+echo "# Total Domains: $COUNT"
+echo "# ========================================="
+echo ""
+cat $TMP_OUT
+} > $OUT_CN
+
+# =========================
+# GLOBAL
+# =========================
 echo "Generating GLOBAL..."
+
 cat main.txt extra.txt \
 | grep -v -E '\.cn$|qq\.com|baidu|taobao|jd\.com' \
 | sort -u \
 | grep -v -f whitelist-final.txt \
-> $OUT_GLOBAL || cp main.txt $OUT_GLOBAL
+> $TMP_OUT || cp main.txt $TMP_OUT
+
+COUNT=$(wc -l < $TMP_OUT)
+
+{
+echo "# ========================================="
+echo "# DNS Blocklist (GLOBAL Version)"
+echo "# Generated: $NOW"
+echo "# Total Domains: $COUNT"
+echo "# ========================================="
+echo ""
+cat $TMP_OUT
+} > $OUT_GLOBAL
 
 # ===== 清理 =====
-rm -f tmp_*.txt main.txt cn.txt extra.txt whitelist-all.txt
+rm -f tmp_*.txt main.txt cn.txt extra.txt whitelist-all.txt whitelist-final.txt
 
 echo "Done!"
