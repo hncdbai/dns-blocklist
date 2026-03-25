@@ -4,16 +4,9 @@ set -e
 # ===== 时间 =====
 NOW=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
 
-# ===== 远程白名单 =====
-REMOTE_WHITELIST_URL="https://raw.githubusercontent.com/BlueSkyXN/AdGuardHomeRules/master/ok.txt"
-REMOTE_WHITELIST="whitelist-remote.txt"
-
 # ===== 临时文件 =====
-TMP_MAIN="tmp_main.txt"
-TMP_CN="tmp_cn.txt"
-TMP_EXTRA="tmp_extra.txt"
-ALL_RULES="all_rules.txt"
-TMP_OUT="tmp_out.txt"
+TMP_ALL="all_rules.txt"
+TMP_CLEAN="clean_rules.txt"
 
 # ===== 输出 =====
 OUT_FULL="blocklist-full.txt"
@@ -34,124 +27,86 @@ download_list () {
   done < $file
 }
 
-# ===== 清洗黑名单域名 =====
-clean_domains () {
-  grep -vE '/|\?|\$|@' | grep -Eo '([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}' | tr '[:upper:]' '[:lower:]' | grep -vE '^([a-z0-9-]{1,3})\.(com|net|org)$' | sort -u
+# ===== 清洗规则（保留ABP格式）=====
+clean_rules () {
+  grep -vE '^!|^\[|^#' \          # 去注释
+  | sed 's/\r//' \
+  | grep -E '^\|\||^@@\|\|' \     # 只保留 || 和 @@||
+  | grep -vE '/|\$|#' \           # 去路径规则/参数规则
+  | sort -u
 }
 
-# ===== 提取白名单域名（@@）=====
-extract_whitelist () {
-  grep '^@@' | grep -Eo '([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}' | tr '[:upper:]' '[:lower:]' | sort -u
-}
+echo "Downloading rules..."
 
-echo "Downloading MAIN..."
-download_list sources-main.txt $TMP_MAIN
+download_list sources-main.txt main.txt
+download_list sources-cn.txt cn.txt
+download_list sources-extra.txt extra.txt
 
-echo "Downloading CN..."
-download_list sources-cn.txt $TMP_CN
-
-echo "Downloading EXTRA..."
-download_list sources-extra.txt $TMP_EXTRA
-
-# ===== 合并所有规则 =====
-cat $TMP_MAIN $TMP_CN $TMP_EXTRA > $ALL_RULES
-
-# ===== 下载远程白名单 =====
-echo "Downloading REMOTE whitelist..."
-curl -s $REMOTE_WHITELIST_URL > $REMOTE_WHITELIST || echo "Failed remote whitelist"
-
-# ===== 提取白名单（来自规则）=====
-echo "Extracting whitelist from rules..."
-cat $ALL_RULES | extract_whitelist > whitelist-from-rules.txt
-
-# ===== 清洗黑名单 =====
-echo "Cleaning rules..."
-cat $TMP_MAIN | clean_domains > main.txt
-cat $TMP_CN | clean_domains > cn.txt
-cat $TMP_EXTRA | clean_domains > extra.txt
-
-# ===== 合并白名单 =====
-echo "Preparing whitelist..."
-
-touch whitelist.txt whitelist-auto.txt $REMOTE_WHITELIST
-
-cat whitelist.txt whitelist-auto.txt whitelist-from-rules.txt $REMOTE_WHITELIST > whitelist-all.txt
-
-# 清理格式
-sed -i 's/\r//' whitelist-all.txt
-
-# 去掉注释
-grep -v '^#' whitelist-all.txt | grep -v '^$' > whitelist-final.txt
-
-# =========================
-# FULL
-# =========================
+# ===== FULL =====
 echo "Generating FULL..."
 
-cat main.txt cn.txt extra.txt | sort -u | grep -v -f whitelist-final.txt > $TMP_OUT || cp main.txt $TMP_OUT
+cat main.txt cn.txt extra.txt > $TMP_ALL
 
-COUNT=$(wc -l < $TMP_OUT)
+cat $TMP_ALL | clean_rules > $TMP_CLEAN
+
+COUNT=$(wc -l < $TMP_CLEAN)
 
 {
-echo "# ========================================="
-echo "# DNS Blocklist (FULL Version)"
-echo "# Generated: $NOW"
-echo "# Total Domains: $COUNT"
-echo "# ========================================="
+echo "! ========================================="
+echo "! DNS Blocklist (FULL - ABP Mode)"
+echo "! Generated: $NOW"
+echo "! Total Rules: $COUNT"
+echo "! ========================================="
 echo ""
-cat $TMP_OUT
+cat $TMP_CLEAN
 } > $OUT_FULL
 
-# =========================
-# CN
-# =========================
+# ===== CN =====
 echo "Generating CN..."
 
-cat main.txt cn.txt | sort -u | grep -v -f whitelist-final.txt > $TMP_OUT || cp main.txt $TMP_OUT
+cat main.txt cn.txt > $TMP_ALL
 
-COUNT=$(wc -l < $TMP_OUT)
+cat $TMP_ALL | clean_rules > $TMP_CLEAN
+
+COUNT=$(wc -l < $TMP_CLEAN)
 
 {
-echo "# ========================================="
-echo "# DNS Blocklist (CN Version)"
-echo "# Generated: $NOW"
-echo "# Total Domains: $COUNT"
-echo "# ========================================="
+echo "! ========================================="
+echo "! DNS Blocklist (CN - ABP Mode)"
+echo "! Generated: $NOW"
+echo "! Total Rules: $COUNT"
+echo "! ========================================="
 echo ""
-cat $TMP_OUT
+cat $TMP_CLEAN
 } > $OUT_CN
 
-# =========================
-# GLOBAL
-# =========================
+# ===== GLOBAL =====
 echo "Generating GLOBAL..."
 
 cat main.txt extra.txt \
-| grep -v -E '\.cn$|qq\.com|baidu|taobao|jd\.com' \
-| sort -u \
-| grep -v -f whitelist-final.txt \
-> $TMP_OUT || cp main.txt $TMP_OUT
+| grep -vE 'baidu|qq\.com|taobao|jd\.com|\.cn' \
+> $TMP_ALL
 
-COUNT=$(wc -l < $TMP_OUT)
+cat $TMP_ALL | clean_rules > $TMP_CLEAN
+
+COUNT=$(wc -l < $TMP_CLEAN)
 
 {
-echo "# ========================================="
-echo "# DNS Blocklist (GLOBAL Version)"
-echo "# Generated: $NOW"
-echo "# Total Domains: $COUNT"
-echo "# ========================================="
+echo "! ========================================="
+echo "! DNS Blocklist (GLOBAL - ABP Mode)"
+echo "! Generated: $NOW"
+echo "! Total Rules: $COUNT"
+echo "! ========================================="
 echo ""
-cat $TMP_OUT
+cat $TMP_CLEAN
 } > $OUT_GLOBAL
 
-# =========================
-# 统计
-# =========================
+# ===== 统计 =====
 echo "Generating stats..."
 
-FULL_COUNT=$(grep -v '^#' $OUT_FULL | wc -l)
-CN_COUNT=$(grep -v '^#' $OUT_CN | wc -l)
-GLOBAL_COUNT=$(grep -v '^#' $OUT_GLOBAL | wc -l)
+FULL_COUNT=$(grep -v '^!' $OUT_FULL | wc -l)
+CN_COUNT=$(grep -v '^!' $OUT_CN | wc -l)
+GLOBAL_COUNT=$(grep -v '^!' $OUT_GLOBAL | wc -l)
 
 cat > stats.json <<EOF
 {
@@ -163,6 +118,6 @@ cat > stats.json <<EOF
 EOF
 
 # ===== 清理 =====
-rm -f tmp_*.txt main.txt cn.txt extra.txt whitelist-all.txt whitelist-final.txt $ALL_RULES whitelist-from-rules.txt
+rm -f main.txt cn.txt extra.txt $TMP_ALL $TMP_CLEAN
 
 echo "Done!"
